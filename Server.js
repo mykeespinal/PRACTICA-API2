@@ -3,11 +3,23 @@ const helmet = require('helmet');
 const { body, validationResult } = require('express-validator');
 require('dotenv').config();
 
+// 1. Inicializamos la aplicación de Express primero
 const app = express();
 
-// 1. CUMPLIMIENTO RÚBRICA: Uso de Helmet para asegurar cabeceras HTTP
+// 2. Importamos los enrutadores y middlewares (sin duplicados)
+const tareasRouter = require('./routes/tareas');
+const climaRouter = require('./routes/clima');
+const authRouter = require('./routes/auth');
+const verificarToken = require('./middleware/auth');
+
+// 3. Middlewares globales indispensables
 app.use(helmet());
 app.use(express.json());
+
+// 4. Conexión y organización de rutas en sus respectivos prefijos
+app.use('/api/auth', authRouter);           // pública: registro y login
+app.use('/api/tareas', verificarToken, tareasRouter);  // protegida con JWT
+app.use('/api/clima', verificarToken, climaRouter);    // protegida con JWT
 
 // ==========================================
 // ENDPOINT 1: POST /api/registro 
@@ -25,14 +37,13 @@ app.post(
             return res.status(400).json({ OK: false, errores: errores.array() });
         }
 
-        // JUSTIFICACIÓN DEL PRINCIPIO DE CODIFICACIÓN SEGURA:
+        // JUSTIFICACIÓN DEL PRINCIPIO DE CODIFICACIÓN SEGURA APLICADO:
         /**
-         * PRINCIPIO DE CODIFICACIÓN SEGURA APLICADO: "Validación de Entradas" (Input Validation) / "No confiar nunca en los datos del usuario".
+         * "Validación de Entradas" (Input Validation) / "No confiar nunca en los datos del usuario".
          * 
-         * Justificación: Este principio establece que cualquier dato proveniente del exterior (cliente/usuario) 
-         * debe ser tratado como malicioso por defecto. Al validar el formato del correo con 'isEmail()', 
-         * asegurar que el nombre no esté vacío con 'notEmpty()' y restringir la longitud mínima de la contraseña 
-         * con 'isLength()', protegemos al sistema contra ataques comunes como Inyección de Código (XSS, SQLi), 
+         * Justificación: Este principio establece que cualquier dato proveniente del exterior debe ser tratado como malicioso por defecto. 
+         * Al validar el formato del correo con 'isEmail()', asegurar que el nombre no esté vacío con 'notEmpty()' y restringir la longitud 
+         * mínima de la contraseña con 'isLength()', protegemos al sistema contra ataques comunes como Inyección de Código (XSS, SQLi), 
          * ataques de fuerza bruta por claves débiles y evitamos comportamientos inesperados en el servidor.
          */
 
